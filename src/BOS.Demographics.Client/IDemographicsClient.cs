@@ -9,10 +9,10 @@ namespace BOS.Demographics.Client
 {
     public interface IDemographicsClient
     {
-        Task<AddPersonResponse<T>> AddPerson<T>(IPerson person) where T : IPerson;
-        Task<GetPersonResponse<T>> GetPersonById<T>(Guid id) where T : IPerson;
-        Task<UpdatePersonResponse> UpdatePerson<T>(IPerson person) where T : IPerson;
-        Task<GetPeopleResponse<T>> GetPeople<T>(bool filterDeleted = true) where T : IPerson;
-        Task<DeletePersonResponse> DeletePersonById(Guid id);
+        Task<AddPersonResponse<T>> AddPersonAsync<T>(IPerson person) where T : IPerson;
+        Task<GetPersonResponse<T>> GetPersonByIdAsync<T>(Guid id) where T : IPerson;
+        Task<UpdatePersonResponse> UpdatePersonAsync<T>(IPerson person) where T : IPerson;
+        Task<GetPeopleResponse<T>> GetPeopleAsync<T>(bool filterDeleted = true) where T : IPerson;
+        Task<DeletePersonResponse> DeletePersonByIdAsync(Guid id);
     }
 }

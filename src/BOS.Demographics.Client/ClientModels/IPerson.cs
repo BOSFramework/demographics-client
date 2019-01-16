@@ -8,40 +8,22 @@ namespace BOS.Demographics.Client.ClientModels
 {
     public interface IPerson
     {
-        [JsonProperty("id")]
         Guid Id { get; set; }
-
-        [JsonProperty("firstName")]
         string FirstName { get; set; }
-
-        [JsonProperty("lastName")]
         string LastName { get; set; }
-
-        [JsonProperty("middleName")]
         string MiddleName { get; set; }
-
-        [JsonProperty("email")]
         string Email { get; set; }
-
-        [JsonProperty("gender")]
         string Gender { get; set; }
-
-        [JsonProperty("phoneNumbers")]
         List<PhoneNumber> PhoneNumbers { get; set; }
-
-        [JsonProperty("addresses")]
         List<Address> Addresses { get; set; }
+        bool Deleted { get; set; }
 
-        [JsonProperty("birthDate")]
+
         [JsonConverter(typeof(OdataDateTimeConverter))]
         DateTimeOffset? BirthDate { get; set; }
 
-        [JsonProperty("relationshipStatus")]
         [JsonConverter(typeof(OdataEnumJsonConverter))]
         RelationshipStatus RelationshipStatus { get; set; }
-
-        [JsonProperty("deleted")]
-        bool Deleted { get; set; }
     }
 
     public enum RelationshipStatus

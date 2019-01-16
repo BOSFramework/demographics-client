@@ -7,16 +7,22 @@ using BOS.Demographics.Client.ClientModels;
 using BOS.Demographics.Client.Responses;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace BOS.Demographics.Client
 {
     public class DemographicsClient : IDemographicsClient
     {
         private readonly HttpClient _httpClient;
+        private readonly DefaultContractResolver _contractResolver;
 
         public DemographicsClient(HttpClient httpClient)
         {
             _httpClient = httpClient;
+            _contractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            };
         }
 
         /// <summary>
@@ -25,9 +31,11 @@ namespace BOS.Demographics.Client
         /// <typeparam name="T">Your class that implements and can extend the person interface. All extensions are key/value.</typeparam>
         /// <param name="person"></param>
         /// <returns></returns>
-        public async Task<AddPersonResponse<T>> AddPerson<T>(IPerson person) where T : IPerson
+        public async Task<AddPersonResponse<T>> AddPersonAsync<T>(IPerson person) where T : IPerson
         {
-            var response = await _httpClient.PostAsJsonAsync("People?api-version=1.0", person).ConfigureAwait(false);
+            var request = new HttpRequestMessage(new HttpMethod("POST"), $"{_httpClient.BaseAddress}People?api-version=1.0");
+            request.Content = new StringContent(JsonConvert.SerializeObject(person, new JsonSerializerSettings() { ContractResolver = _contractResolver, Formatting = Formatting.Indented }), Encoding.UTF8, "application/json");
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             var addPersonResponse = new AddPersonResponse<T>(response.StatusCode);
 
             if (addPersonResponse.IsSuccessStatusCode)
@@ -48,15 +56,9 @@ namespace BOS.Demographics.Client
         /// </summary>
         /// <param name="id">The Id of the eprson to delete.</param>
         /// <returns></returns>
-        public async Task<DeletePersonResponse> DeletePersonById(Guid id)
+        public async Task<DeletePersonResponse> DeletePersonByIdAsync(Guid id)
         {
-            // Current hacky wacky method used to get the user to set the property for deleted for
-            // Should be changed to call an Delete method once it is available.
-            var personToDelete = await _httpClient.GetAsync($"People({id.ToString()})?api-version=1.0").ConfigureAwait(false);
-            var personPayload = JsonConvert.DeserializeObject<JObject>(personToDelete.Content.ReadAsStringAsync().Result);
-            personPayload["deleted"] = true;
-
-            var response = await _httpClient.PutAsJsonAsync($"People({id.ToString()})?api-version=1.0", personPayload);
+            var response = await _httpClient.DeleteAsync($"People({id.ToString()})?api-version=1.0");
             return new DeletePersonResponse(response.StatusCode);
         }
 
@@ -65,7 +67,7 @@ namespace BOS.Demographics.Client
         /// </summary>
         /// <typeparam name="T">Your implementation of a BOS Person, with any additional properties.</typeparam>
         /// <returns></returns>
-        public async Task<GetPeopleResponse<T>> GetPeople<T>(bool filterDeleted = true) where T : IPerson
+        public async Task<GetPeopleResponse<T>> GetPeopleAsync<T>(bool filterDeleted = true) where T : IPerson
         {
             var httpUrl = filterDeleted ? "People?api-version=1.0" : "People?$filter=Deleted eq false&api-version=1.0";
             var response = await _httpClient.GetAsync(httpUrl).ConfigureAwait(false);
@@ -86,7 +88,7 @@ namespace BOS.Demographics.Client
         /// <typeparam name="T">Your implementation of a BOS Person, with any additional properties.</typeparam>
         /// <param name="id">The Id of the person to retrieve.</param>
         /// <returns></returns>
-        public async Task<GetPersonResponse<T>> GetPersonById<T>(Guid id) where T : IPerson
+        public async Task<GetPersonResponse<T>> GetPersonByIdAsync<T>(Guid id) where T : IPerson
         {
             var response = await _httpClient.GetAsync($"People({id.ToString()})?api-version=1.0").ConfigureAwait(false);
 
@@ -105,9 +107,11 @@ namespace BOS.Demographics.Client
         /// <typeparam name="T">Your implementation of a BOS Person, with any additional properties.</typeparam>
         /// <param name="person">The person object with all properties you want to ensure are saved.</param>
         /// <returns></returns>
-        public async Task<UpdatePersonResponse> UpdatePerson<T>(IPerson person) where T : IPerson
+        public async Task<UpdatePersonResponse> UpdatePersonAsync<T>(IPerson person) where T : IPerson
         {
-            var response = await _httpClient.PutAsJsonAsync($"People({person.Id.ToString()})?api-version=1.0", person).ConfigureAwait(false);
+            var request = new HttpRequestMessage(new HttpMethod("PUT"), $"{_httpClient.BaseAddress}People({person.Id.ToString()})?api-version=1.0");
+            request.Content = new StringContent(JsonConvert.SerializeObject(person, new JsonSerializerSettings() { ContractResolver = _contractResolver, Formatting = Formatting.Indented }), Encoding.UTF8, "application/json");
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
             return new UpdatePersonResponse(response.StatusCode);
         }
